@@ -1,54 +1,57 @@
 package com.robel.capstone.controller;
 
 
-import com.robel.capstone.model.UsersModel;
-import com.robel.capstone.service.UsersService;
+import com.robel.capstone.dto.UserDTO;
+
+import com.robel.capstone.service.UserService;
+import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 
+/***
+ *  this controller is for the register page the admin can register a new admin
+ *  after registering the admin can login to the admin page
+ */
+
+
+
 @Controller
 public class UsersController {
 
-    private final UsersService usersService;
+   private UserService userService;
 
-    public UsersController(UsersService usersService) {
-        this.usersService = usersService;
-    }
 
-    @GetMapping("/login")
-    public String getSignInPage(Model model) {
-        model.addAttribute("loginRequest", new UsersModel());
-        return "login";
+
+    @Autowired
+    public UsersController(UserService usersService) {
+        this.userService = usersService;
     }
 
 
     @GetMapping("/register")
-    public String getRegisterPage( Model model) {
-        model.addAttribute("registerRequest", new UsersModel());
+    public String getRegisterPage(Model model) {
+       model.addAttribute("user", new UserDTO());
 
         return "register";
     }
 
     @PostMapping("/register")
-    public String postRegisterPage(@ModelAttribute UsersModel  usersModel) {
-        UsersModel registeredUser = usersService.registerUser(usersModel.getFirstName(), usersModel.getLastName(), usersModel.getEmail(), usersModel.getPassword());
-       return registeredUser == null ? "error_page" : "redirect:/login";
+    public String postRegisterPage(@Valid @ModelAttribute("user") UserDTO userDTO,BindingResult bindingResult) {
+     if (bindingResult.hasErrors()) {
+            return "register";
+        }
+       userService.save(userDTO);
+        return "redirect:/login?success";
 
     }
 
-    @PostMapping("/login")
-    public String postLoginPage(@ModelAttribute UsersModel  usersModel, Model model) {
 
-        UsersModel authenticated = usersService.authenticateUser(usersModel.getEmail(), usersModel.getPassword());
-       if(authenticated != null) {
-           model.addAttribute("userLogin", authenticated.getEmail());
-           return "home_page";
-       }
-       return "error_page";
 
-    }
+
 
 }
